@@ -46,6 +46,8 @@ final class Jeebika_Data_Layer {
     private function load_dependencies() {
         require_once JDL_PLUGIN_DIR . 'includes/class-jdl-settings.php';
         require_once JDL_PLUGIN_DIR . 'includes/class-jdl-gtm.php';
+        require_once JDL_PLUGIN_DIR . 'includes/class-jdl-universal-datalayer.php';
+        require_once JDL_PLUGIN_DIR . 'includes/class-jdl-universal-ecommerce.php';
         require_once JDL_PLUGIN_DIR . 'includes/class-jdl-data-layer.php';
         require_once JDL_PLUGIN_DIR . 'includes/class-jdl-user-tracking.php';
         require_once JDL_PLUGIN_DIR . 'includes/class-jdl-server-side.php';
@@ -70,6 +72,8 @@ final class Jeebika_Data_Layer {
         // Initialize modules
         JDL_Settings::get_instance();
         JDL_GTM::get_instance();
+        JDL_Universal_DataLayer::get_instance();
+        JDL_Universal_Ecommerce::get_instance();
         JDL_Data_Layer::get_instance();
         JDL_User_Tracking::get_instance();
         JDL_Server_Side::get_instance();
