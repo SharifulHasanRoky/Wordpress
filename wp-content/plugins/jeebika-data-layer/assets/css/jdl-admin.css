@@ -1,256 +1,266 @@
-/* Jeebika Data Layer Admin Styles */
+/* Jeebika Data Layer - Admin Styles */
+
 .jdl-wrap {
     max-width: 1200px;
-    margin: 20px 20px 20px 0;
+    margin: 20px auto;
+    padding: 0 20px;
 }
 
 .jdl-wrap h1 {
     font-size: 28px;
     font-weight: 700;
+    margin-bottom: 20px;
     color: #1d2327;
-    margin-bottom: 5px;
 }
 
-.jdl-description {
+/* Tabs */
+.jdl-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 24px;
+}
+
+.jdl-tab {
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #50575e;
+    font-weight: 500;
     font-size: 14px;
-    color: #646970;
-    margin-bottom: 25px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s ease;
 }
 
-/* Cards */
+.jdl-tab:hover {
+    color: #2271b1;
+    border-bottom-color: #2271b1;
+}
+
+.jdl-tab.active {
+    color: #2271b1;
+    border-bottom-color: #2271b1;
+    font-weight: 600;
+}
+
+/* Card */
 .jdl-card {
     background: #fff;
-    border: 1px solid #dcdcde;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .jdl-card h2 {
     font-size: 20px;
-    margin: 0 0 10px 0;
+    font-weight: 600;
+    margin: 0 0 16px;
     color: #1d2327;
 }
 
 .jdl-card h3 {
     font-size: 16px;
-    color: #2271b1;
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #f0f0f1;
+    font-weight: 600;
+    margin: 24px 0 12px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    color: #1d2327;
 }
 
-.jdl-card-header {
+.jdl-card h3:first-of-type {
+    margin-top: 16px;
+}
+
+/* Section Actions (Enable/Disable All) */
+.jdl-section-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
-.jdl-card-header h2 {
-    margin: 0;
+.jdl-section-actions .button {
+    font-size: 12px;
+    padding: 4px 12px;
+    min-height: 28px;
+}
+
+/* Grid Layout */
+.jdl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+/* Fields */
+.jdl-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.jdl-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #50575e;
+}
+
+.jdl-field input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.jdl-field input[type="text"]:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(34, 113, 177, 0.12);
+}
+
+/* Toggles */
+.jdl-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.jdl-toggles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.jdl-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.jdl-toggle-label {
+    font-size: 14px;
+    color: #1d2327;
 }
 
 /* Toggle Switch */
 .jdl-toggle {
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-    gap: 12px;
-}
-
-.jdl-toggle input {
-    display: none;
-}
-
-.jdl-toggle-slider {
     position: relative;
+    display: inline-block;
     width: 44px;
     height: 24px;
-    background: #ccc;
-    border-radius: 24px;
-    transition: all 0.3s ease;
     flex-shrink: 0;
 }
 
-.jdl-toggle-slider::before {
-    content: '';
+.jdl-toggle input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
+}
+
+.jdl-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 24px;
+    transition: background-color 0.3s;
+}
+
+.jdl-toggle-slider::before {
+    content: "";
+    position: absolute;
     height: 18px;
-    background: #fff;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #fff;
     border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.3s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .jdl-toggle input:checked + .jdl-toggle-slider {
-    background: #2271b1;
+    background-color: #2271b1;
 }
 
 .jdl-toggle input:checked + .jdl-toggle-slider::before {
     transform: translateX(20px);
 }
 
-.jdl-event-name {
-    font-weight: 600;
-    color: #1d2327;
-    font-size: 14px;
+.jdl-toggle input:focus + .jdl-toggle-slider {
+    box-shadow: 0 0 0 2px rgba(34, 113, 177, 0.2);
 }
 
-/* Events Grid */
-.jdl-events-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-    margin-bottom: 25px;
+/* Actions / Save Button */
+.jdl-actions {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
 }
 
-.jdl-event-item {
-    padding: 16px;
-    border: 1px solid #e8e8e8;
-    border-radius: 6px;
-    background: #fafafa;
-    transition: all 0.2s ease;
-}
-
-.jdl-event-item:hover {
-    border-color: #2271b1;
-    background: #f0f6fc;
-}
-
-.jdl-event-desc {
-    margin: 8px 0 0 56px;
-    font-size: 12px;
-    color: #646970;
-    line-height: 1.4;
-}
-
-/* Industry Grid */
-.jdl-industry-grid .jdl-event-item {
-    padding: 20px;
-}
-
-/* Status Card */
-.jdl-status-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-}
-
-.jdl-status-card h2 {
-    color: #fff;
-}
-
-.jdl-status-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-}
-
-.jdl-status-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 6px;
-    font-size: 13px;
-}
-
-.jdl-status-item.active {
-    background: rgba(255,255,255,0.2);
-}
-
-.jdl-status-item .dashicons {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-}
-
-/* Buttons */
 .jdl-save-btn {
-    margin-top: 20px !important;
-}
-
-.jdl-bulk-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.jdl-enable-all, .jdl-disable-all {
-    font-size: 12px !important;
-    padding: 4px 12px !important;
-}
-
-/* Code Preview */
-.jdl-code-preview {
-    background: #23282d;
-    color: #a5d6a7;
-    padding: 20px;
-    border-radius: 6px;
-    font-size: 12px;
-    line-height: 1.6;
-    overflow-x: auto;
-    white-space: pre;
-    font-family: 'Fira Code', 'Source Code Pro', monospace;
-}
-
-/* Info List */
-.jdl-info-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.jdl-info-list li {
-    padding: 8px 0;
-    font-size: 14px;
-    border-bottom: 1px solid #f0f0f1;
-}
-
-.jdl-info-list li:last-child {
-    border-bottom: none;
+    padding: 8px 24px !important;
+    font-size: 14px !important;
+    border-radius: 6px !important;
 }
 
 /* Toast Notification */
 .jdl-toast {
     position: fixed;
-    top: 50px;
-    right: 20px;
-    padding: 12px 24px;
-    background: #00a32a;
+    bottom: 30px;
+    right: 30px;
+    background: #1d2327;
     color: #fff;
-    border-radius: 6px;
+    padding: 14px 24px;
+    border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
     z-index: 99999;
-    animation: jdl-slide-in 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.jdl-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.jdl-toast.success {
+    background: #00a32a;
 }
 
 .jdl-toast.error {
     background: #d63638;
 }
 
-@keyframes jdl-slide-in {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
 /* Responsive */
 @media (max-width: 782px) {
-    .jdl-events-grid {
+    .jdl-tabs {
+        flex-wrap: wrap;
+    }
+
+    .jdl-tab {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .jdl-grid {
         grid-template-columns: 1fr;
     }
-    .jdl-card-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .jdl-status-grid {
+
+    .jdl-toggles-grid {
         grid-template-columns: 1fr;
     }
 }
