@@ -399,11 +399,11 @@ dataLayer.push({
         $options = $this->settings->get_all();
         ?>
         <div class="wrap jdl-wrap">
-            <h1>☁️ Server-Side Tracking</h1>
-            <p class="jdl-description">Send events directly from your server for better accuracy and ad-blocker bypass.</p>
+            <h1>☁️ Server-Side Tracking (7 Platforms)</h1>
+            <p class="jdl-description">Send events directly from your server to all major ad platforms. Bypasses ad-blockers, improves match quality.</p>
 
             <div class="jdl-card">
-                <h2>Server-Side Configuration</h2>
+                <h2>Master Switch</h2>
                 <form method="post" class="jdl-form" id="jdl-settings-form">
                     <?php wp_nonce_field('jdl_admin_nonce', 'jdl_nonce'); ?>
 
@@ -414,7 +414,7 @@ dataLayer.push({
                                 <label class="jdl-toggle">
                                     <input type="checkbox" name="enable_server_side" value="1" <?php checked($options['enable_server_side'] ?? 0); ?>>
                                     <span class="jdl-toggle-slider"></span>
-                                    Enable server-side event forwarding
+                                    Enable server-side event forwarding to all configured platforms
                                 </label>
                             </td>
                         </tr>
@@ -423,61 +423,121 @@ dataLayer.push({
                     <h3>📊 GA4 Measurement Protocol</h3>
                     <table class="form-table">
                         <tr>
-                            <th><label for="ss_ga4_measurement_id">GA4 Measurement ID</label></th>
-                            <td>
-                                <input type="text" id="ss_ga4_measurement_id" name="ss_ga4_measurement_id" 
-                                       value="<?php echo esc_attr($options['ss_ga4_measurement_id'] ?? ''); ?>" 
-                                       placeholder="G-XXXXXXXXXX" class="regular-text">
-                            </td>
+                            <th><label for="ss_ga4_measurement_id">Measurement ID</label></th>
+                            <td><input type="text" id="ss_ga4_measurement_id" name="ss_ga4_measurement_id" value="<?php echo esc_attr($options['ss_ga4_measurement_id'] ?? ''); ?>" placeholder="G-XXXXXXXXXX" class="regular-text"></td>
                         </tr>
                         <tr>
-                            <th><label for="ss_ga4_api_secret">GA4 API Secret</label></th>
-                            <td>
-                                <input type="password" id="ss_ga4_api_secret" name="ss_ga4_api_secret" 
-                                       value="<?php echo esc_attr($options['ss_ga4_api_secret'] ?? ''); ?>" 
-                                       class="regular-text">
-                                <p class="description">Found in GA4 > Admin > Data Streams > Measurement Protocol API secrets</p>
-                            </td>
+                            <th><label for="ss_ga4_api_secret">API Secret</label></th>
+                            <td><input type="password" id="ss_ga4_api_secret" name="ss_ga4_api_secret" value="<?php echo esc_attr($options['ss_ga4_api_secret'] ?? ''); ?>" class="regular-text">
+                            <p class="description">GA4 > Admin > Data Streams > Measurement Protocol API secrets</p></td>
                         </tr>
                     </table>
 
-                    <h3>📘 Facebook Conversions API</h3>
+                    <h3>📘 Facebook / Meta Conversions API</h3>
                     <table class="form-table">
                         <tr>
-                            <th><label for="ss_fb_pixel_id">Facebook Pixel ID</label></th>
-                            <td>
-                                <input type="text" id="ss_fb_pixel_id" name="ss_fb_pixel_id" 
-                                       value="<?php echo esc_attr($options['ss_fb_pixel_id'] ?? ''); ?>" 
-                                       placeholder="123456789012345" class="regular-text">
-                            </td>
+                            <th><label for="ss_fb_pixel_id">Pixel ID</label></th>
+                            <td><input type="text" id="ss_fb_pixel_id" name="ss_fb_pixel_id" value="<?php echo esc_attr($options['ss_fb_pixel_id'] ?? ''); ?>" placeholder="123456789012345" class="regular-text"></td>
                         </tr>
                         <tr>
-                            <th><label for="ss_fb_access_token">Facebook Access Token</label></th>
-                            <td>
-                                <input type="password" id="ss_fb_access_token" name="ss_fb_access_token" 
-                                       value="<?php echo esc_attr($options['ss_fb_access_token'] ?? ''); ?>" 
-                                       class="regular-text">
-                                <p class="description">Found in Facebook Events Manager > Settings > Conversions API</p>
-                            </td>
+                            <th><label for="ss_fb_access_token">Access Token</label></th>
+                            <td><input type="password" id="ss_fb_access_token" name="ss_fb_access_token" value="<?php echo esc_attr($options['ss_fb_access_token'] ?? ''); ?>" class="regular-text">
+                            <p class="description">Events Manager > Settings > Conversions API > Generate Access Token</p></td>
                         </tr>
                     </table>
 
-                    <h3>🔐 API Endpoint</h3>
+                    <h3>🎵 TikTok Events API</h3>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="ss_tiktok_pixel_id">Pixel Code</label></th>
+                            <td><input type="text" id="ss_tiktok_pixel_id" name="ss_tiktok_pixel_id" value="<?php echo esc_attr($options['ss_tiktok_pixel_id'] ?? ''); ?>" placeholder="CXXXXXXXXXXXXXXX" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_tiktok_access_token">Access Token</label></th>
+                            <td><input type="password" id="ss_tiktok_access_token" name="ss_tiktok_access_token" value="<?php echo esc_attr($options['ss_tiktok_access_token'] ?? ''); ?>" class="regular-text">
+                            <p class="description">TikTok Events Manager > Settings > Generate Access Token</p></td>
+                        </tr>
+                    </table>
+
+                    <h3>🔍 Google Ads Enhanced Conversions</h3>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="ss_gads_customer_id">Customer ID</label></th>
+                            <td><input type="text" id="ss_gads_customer_id" name="ss_gads_customer_id" value="<?php echo esc_attr($options['ss_gads_customer_id'] ?? ''); ?>" placeholder="123-456-7890" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_gads_conversion_action">Conversion Action ID</label></th>
+                            <td><input type="text" id="ss_gads_conversion_action" name="ss_gads_conversion_action" value="<?php echo esc_attr($options['ss_gads_conversion_action'] ?? ''); ?>" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_gads_developer_token">Developer Token</label></th>
+                            <td><input type="password" id="ss_gads_developer_token" name="ss_gads_developer_token" value="<?php echo esc_attr($options['ss_gads_developer_token'] ?? ''); ?>" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_gads_oauth_token">OAuth Token</label></th>
+                            <td><input type="password" id="ss_gads_oauth_token" name="ss_gads_oauth_token" value="<?php echo esc_attr($options['ss_gads_oauth_token'] ?? ''); ?>" class="regular-text">
+                            <p class="description">Google Ads API credentials from Google Cloud Console</p></td>
+                        </tr>
+                    </table>
+
+                    <h3>💼 LinkedIn Conversions API</h3>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="ss_linkedin_partner_id">Partner ID</label></th>
+                            <td><input type="text" id="ss_linkedin_partner_id" name="ss_linkedin_partner_id" value="<?php echo esc_attr($options['ss_linkedin_partner_id'] ?? ''); ?>" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_linkedin_conversion_id">Conversion Rule ID</label></th>
+                            <td><input type="text" id="ss_linkedin_conversion_id" name="ss_linkedin_conversion_id" value="<?php echo esc_attr($options['ss_linkedin_conversion_id'] ?? ''); ?>" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_linkedin_access_token">Access Token</label></th>
+                            <td><input type="password" id="ss_linkedin_access_token" name="ss_linkedin_access_token" value="<?php echo esc_attr($options['ss_linkedin_access_token'] ?? ''); ?>" class="regular-text">
+                            <p class="description">LinkedIn Campaign Manager > Conversions API setup</p></td>
+                        </tr>
+                    </table>
+
+                    <h3>🐦 X (Twitter) Conversions API</h3>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="ss_x_pixel_id">Pixel ID</label></th>
+                            <td><input type="text" id="ss_x_pixel_id" name="ss_x_pixel_id" value="<?php echo esc_attr($options['ss_x_pixel_id'] ?? ''); ?>" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_x_conversion_id">Conversion Event ID</label></th>
+                            <td><input type="text" id="ss_x_conversion_id" name="ss_x_conversion_id" value="<?php echo esc_attr($options['ss_x_conversion_id'] ?? ''); ?>" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_x_access_token">Access Token</label></th>
+                            <td><input type="password" id="ss_x_access_token" name="ss_x_access_token" value="<?php echo esc_attr($options['ss_x_access_token'] ?? ''); ?>" class="regular-text">
+                            <p class="description">X Ads Manager > Events Manager > Conversions API</p></td>
+                        </tr>
+                    </table>
+
+                    <h3>📌 Pinterest Conversions API</h3>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="ss_pinterest_ad_account_id">Ad Account ID</label></th>
+                            <td><input type="text" id="ss_pinterest_ad_account_id" name="ss_pinterest_ad_account_id" value="<?php echo esc_attr($options['ss_pinterest_ad_account_id'] ?? ''); ?>" class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="ss_pinterest_access_token">Access Token</label></th>
+                            <td><input type="password" id="ss_pinterest_access_token" name="ss_pinterest_access_token" value="<?php echo esc_attr($options['ss_pinterest_access_token'] ?? ''); ?>" class="regular-text">
+                            <p class="description">Pinterest Business > Conversions > Access Token</p></td>
+                        </tr>
+                    </table>
+
+                    <h3>🔐 API Endpoint (External Integration)</h3>
                     <table class="form-table">
                         <tr>
                             <th>REST API Endpoint</th>
-                            <td>
-                                <code><?php echo esc_html(rest_url('jdl/v1/event')); ?></code>
-                                <p class="description">Use this endpoint to send events from external systems</p>
-                            </td>
+                            <td><code><?php echo esc_html(rest_url('jdl/v1/event')); ?></code>
+                            <p class="description">Use this endpoint to send events from external systems</p></td>
                         </tr>
                         <tr>
                             <th>Endpoint Secret</th>
-                            <td>
-                                <input type="text" value="<?php echo esc_attr($options['ss_endpoint_secret'] ?? ''); ?>" 
-                                       class="regular-text" readonly>
-                                <p class="description">Send as X-JDL-Secret header for API authentication</p>
-                            </td>
+                            <td><input type="text" value="<?php echo esc_attr($options['ss_endpoint_secret'] ?? ''); ?>" class="regular-text" readonly>
+                            <p class="description">Send as X-JDL-Secret header for API authentication</p></td>
                         </tr>
                     </table>
 
@@ -500,7 +560,13 @@ dataLayer.push({
 
         // Update text fields
         $text_fields = ['gtm_container_id', 'gtm_server_container_url', 'ss_ga4_measurement_id', 
-                        'ss_ga4_api_secret', 'ss_fb_pixel_id', 'ss_fb_access_token', 'industry_type'];
+                        'ss_ga4_api_secret', 'ss_fb_pixel_id', 'ss_fb_access_token',
+                        'ss_tiktok_pixel_id', 'ss_tiktok_access_token',
+                        'ss_gads_customer_id', 'ss_gads_conversion_action', 'ss_gads_developer_token', 'ss_gads_oauth_token',
+                        'ss_linkedin_partner_id', 'ss_linkedin_conversion_id', 'ss_linkedin_access_token',
+                        'ss_x_pixel_id', 'ss_x_conversion_id', 'ss_x_access_token',
+                        'ss_pinterest_ad_account_id', 'ss_pinterest_access_token',
+                        'industry_type'];
         foreach ($text_fields as $field) {
             if (isset($posted[$field])) {
                 $current_options[$field] = sanitize_text_field($posted[$field]);
