@@ -19,203 +19,393 @@ class JDL_Data_Layer {
         add_action('wp_footer', [$this, 'inject_tracking_scripts'], 99);
     }
 
+    /**
+     * Push unified page_view data layer (GA4 schema)
+     * All platforms read from this single push
+     */
     public function push_page_data() {
         if (!$this->settings->is_enabled('track_page_view')) return;
 
-        $page_data = $this->get_page_data();
+        $data = $this->get_page_data();
         ?>
         <script>
             window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push(<?php echo wp_json_encode($page_data); ?>);
+            window.dataLayer.push(<?php echo wp_json_encode($data); ?>);
         </script>
         <?php
     }
 
     private function get_page_data() {
-        global $post;
+        global $post, $wp_query;
 
         $data = [
+            // GA4 standard event
             'event' => 'page_view',
+
+            // Page parameters (GA4 auto-collected params)
+            'page_location' => $this->get_current_url(),
+            'page_path' => wp_parse_url($this->get_current_url(), PHP_URL_PATH) ?: '/',
+            'page_title' => wp_get_document_title(),
+            'page_referrer' => wp_get_referer() ?: '',
+
+            // Custom page parameters
             'page_type' => $this->get_page_type(),
-            'page_title' => wp_title('', false),
-            'page_url' => home_url(add_query_arg(null, null)),
-            'page_path' => wp_parse_url(home_url(add_query_arg(null, null)), PHP_URL_PATH),
+            'page_id' => is_singular() && $post ? $post->ID : 0,
+            'page_template' => is_singular() && $post ? get_page_template_slug($post) : '',
+
+            // Site parameters
             'site_name' => get_bloginfo('name'),
+            'site_url' => home_url(),
             'site_language' => get_locale(),
+            'site_currency' => function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : '',
+
+            // Content parameters (for content pages)
+            'content_type' => is_singular() && $post ? $post->post_type : '',
+            'content_id' => is_singular() && $post ? (string) $post->ID : '',
+            'content_author' => is_singular() && $post ? get_the_author_meta('display_name', $post->post_author) : '',
+            'content_date' => is_singular() && $post ? get_the_date('Y-m-d', $post) : '',
+            'content_modified_date' => is_singular() && $post ? get_the_modified_date('Y-m-d', $post) : '',
+            'content_category' => $this->get_content_category(),
+            'content_tags' => $this->get_content_tags(),
+            'content_word_count' => is_singular() && $post ? str_word_count(strip_tags($post->post_content)) : 0,
+
+            // Search parameters
+            'search_term' => is_search() ? get_search_query() : '',
+            'search_results_count' => is_search() ? (int) $wp_query->found_posts : 0,
+
+            // Environment
+            'environment' => defined('WP_DEBUG') && WP_DEBUG ? 'development' : 'production',
             'timestamp' => current_time('c'),
+            'unix_timestamp' => time(),
         ];
 
-        if (is_singular() && $post) {
-            $data['content_id'] = $post->ID;
-            $data['content_type'] = $post->post_type;
-            $data['content_author'] = get_the_author_meta('display_name', $post->post_author);
-            $data['content_date'] = get_the_date('Y-m-d', $post);
+        // WooCommerce specific page data
+        if (function_exists('is_shop')) {
+            $data['is_woocommerce'] = is_woocommerce() || is_cart() || is_checkout() || is_account_page();
 
-            $categories = get_the_category($post->ID);
-            if ($categories) {
-                $data['content_category'] = $categories[0]->name;
+            if (is_product() && $post) {
+                $product = wc_get_product($post->ID);
+                if ($product) {
+                    $data['product_id'] = (string) $product->get_id();
+                    $data['product_sku'] = $product->get_sku();
+                    $data['product_name'] = $product->get_name();
+                    $data['product_price'] = (float) $product->get_price();
+                    $data['product_stock_status'] = $product->get_stock_status();
+                    $data['product_type'] = $product->get_type();
+                }
             }
-        }
-
-        if (is_search()) {
-            $data['search_term'] = get_search_query();
-            $data['search_results_count'] = $GLOBALS['wp_query']->found_posts;
-        }
-
-        if (is_404()) {
-            $data['page_type'] = '404';
-            $data['event'] = 'page_not_found';
         }
 
         return $data;
     }
 
+    private function get_current_url() {
+        $url = home_url(add_query_arg(null, null));
+        return $url ?: home_url('/');
+    }
+
     private function get_page_type() {
+        if (function_exists('is_shop')) {
+            if (is_shop()) return 'shop';
+            if (is_product_category()) return 'product_category';
+            if (is_product_tag()) return 'product_tag';
+            if (is_product()) return 'product';
+            if (is_cart()) return 'cart';
+            if (is_checkout()) return 'checkout';
+            if (is_order_received_page()) return 'order_received';
+            if (is_account_page()) return 'my_account';
+        }
         if (is_front_page()) return 'home';
-        if (is_shop()) return 'shop';
-        if (is_product_category()) return 'product_category';
-        if (is_product()) return 'product';
-        if (is_cart()) return 'cart';
-        if (is_checkout()) return 'checkout';
-        if (is_account_page()) return 'account';
-        if (is_category()) return 'category';
-        if (is_tag()) return 'tag';
+        if (is_home()) return 'blog';
         if (is_single()) return 'post';
         if (is_page()) return 'page';
+        if (is_category()) return 'category';
+        if (is_tag()) return 'tag';
+        if (is_author()) return 'author';
         if (is_archive()) return 'archive';
         if (is_search()) return 'search';
         if (is_404()) return '404';
         return 'other';
     }
 
+    private function get_content_category() {
+        global $post;
+        if (!is_singular() || !$post) return '';
+
+        if ($post->post_type === 'product') {
+            $terms = wp_get_post_terms($post->ID, 'product_cat', ['fields' => 'names']);
+        } else {
+            $terms = wp_get_post_terms($post->ID, 'category', ['fields' => 'names']);
+        }
+        return !empty($terms) && !is_wp_error($terms) ? $terms[0] : '';
+    }
+
+    private function get_content_tags() {
+        global $post;
+        if (!is_singular() || !$post) return '';
+
+        if ($post->post_type === 'product') {
+            $terms = wp_get_post_terms($post->ID, 'product_tag', ['fields' => 'names']);
+        } else {
+            $terms = wp_get_post_terms($post->ID, 'post_tag', ['fields' => 'names']);
+        }
+        return !empty($terms) && !is_wp_error($terms) ? implode(', ', $terms) : '';
+    }
+
+    /**
+     * Inject engagement & interaction tracking scripts
+     * All fire GA4-schema events into dataLayer
+     */
     public function inject_tracking_scripts() {
+        $config = $this->get_js_config();
         ?>
         <script>
         (function() {
             'use strict';
             window.dataLayer = window.dataLayer || [];
-            var jdlConfig = <?php echo wp_json_encode($this->get_js_config()); ?>;
+            var cfg = <?php echo wp_json_encode($config); ?>;
 
-            // Scroll Depth Tracking
-            if (jdlConfig.track_scroll_depth) {
-                var scrollThresholds = [25, 50, 75, 90, 100];
-                var scrollFired = {};
+            // ========== SCROLL DEPTH (GA4: scroll) ==========
+            if (cfg.scroll) {
+                var thresholds = [10, 25, 50, 75, 90, 100];
+                var fired = {};
                 window.addEventListener('scroll', function() {
-                    var scrollPercent = Math.round((window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100);
-                    scrollThresholds.forEach(function(threshold) {
-                        if (scrollPercent >= threshold && !scrollFired[threshold]) {
-                            scrollFired[threshold] = true;
+                    var pct = Math.round((window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100);
+                    if (isNaN(pct)) return;
+                    thresholds.forEach(function(t) {
+                        if (pct >= t && !fired[t]) {
+                            fired[t] = true;
                             window.dataLayer.push({
-                                'event': 'scroll_depth',
-                                'scroll_percentage': threshold,
-                                'page_path': window.location.pathname
+                                'event': 'scroll',
+                                'percent_scrolled': t,
+                                'page_location': window.location.href,
+                                'page_path': window.location.pathname,
+                                'page_title': document.title
                             });
                         }
                     });
                 });
             }
 
-            // Click Tracking
-            if (jdlConfig.track_click_events) {
+            // ========== CLICK EVENTS (GA4: select_content / outbound_click) ==========
+            if (cfg.click) {
                 document.addEventListener('click', function(e) {
-                    var target = e.target.closest('a, button, [data-track-click]');
-                    if (!target) return;
+                    var el = e.target.closest('a, button, [data-track-click], input[type="submit"]');
+                    if (!el) return;
 
-                    var clickData = {
-                        'event': 'click',
-                        'click_element': target.tagName.toLowerCase(),
-                        'click_text': (target.textContent || '').trim().substring(0, 100),
-                        'click_url': target.href || '',
-                        'click_id': target.id || '',
-                        'click_classes': target.className || ''
+                    var href = el.href || '';
+                    var text = (el.textContent || el.value || '').trim().substring(0, 100);
+                    var isOutbound = href && el.hostname && el.hostname !== window.location.hostname;
+                    var isTel = href.indexOf('tel:') === 0;
+                    var isMail = href.indexOf('mailto:') === 0;
+                    var isDownload = href.match(/\.(pdf|docx?|xlsx?|pptx?|zip|rar|csv|txt)(\?|$)/i);
+
+                    var eventData = {
+                        'event': 'select_content',
+                        'content_type': el.tagName.toLowerCase(),
+                        'link_text': text,
+                        'link_url': href,
+                        'link_id': el.id || '',
+                        'link_classes': el.className || '',
+                        'page_location': window.location.href,
+                        'outbound': isOutbound || false
                     };
 
-                    if (target.dataset.trackClick) {
-                        clickData.click_category = target.dataset.trackClick;
+                    // GA4 outbound click
+                    if (isOutbound) {
+                        eventData.event = 'click';
+                        eventData.link_domain = el.hostname;
+                        eventData.outbound = true;
                     }
 
-                    // Outbound link detection
-                    if (target.href && target.hostname !== window.location.hostname) {
-                        clickData.event = 'outbound_click';
-                        clickData.outbound_url = target.href;
+                    // Phone click
+                    if (isTel) {
+                        eventData.event = 'generate_lead';
+                        eventData.lead_source = 'phone_click';
+                        eventData.phone_number = href.replace('tel:', '').replace(/\s/g, '');
+                        eventData.currency = cfg.currency;
+                        eventData.value = 0;
                     }
 
-                    // Phone/Email clicks
-                    if (target.href) {
-                        if (target.href.indexOf('tel:') === 0) {
-                            clickData.event = 'phone_click';
-                            clickData.phone_number = target.href.replace('tel:', '');
-                        }
-                        if (target.href.indexOf('mailto:') === 0) {
-                            clickData.event = 'email_click';
-                            clickData.email_address = target.href.replace('mailto:', '');
-                        }
+                    // Email click
+                    if (isMail) {
+                        eventData.event = 'generate_lead';
+                        eventData.lead_source = 'email_click';
+                        eventData.value = 0;
+                        eventData.currency = cfg.currency;
                     }
 
-                    // CTA button detection
-                    if (target.classList.contains('cta') || target.classList.contains('btn-primary') || target.dataset.trackClick === 'cta') {
-                        clickData.event = 'cta_click';
+                    // File download (GA4: file_download)
+                    if (isDownload) {
+                        eventData.event = 'file_download';
+                        eventData.file_name = href.split('/').pop().split('?')[0];
+                        eventData.file_extension = href.match(/\.(\w+)(\?|$)/)[1];
+                        eventData.link_url = href;
                     }
 
-                    window.dataLayer.push(clickData);
+                    // CTA detection
+                    if (el.classList.contains('cta') || el.classList.contains('btn-primary') ||
+                        el.classList.contains('wp-block-button__link') || el.dataset.trackClick === 'cta') {
+                        eventData.event = 'select_promotion';
+                        eventData.promotion_name = text;
+                        eventData.creative_slot = el.closest('section,header,footer,.hero')
+                            ? el.closest('section,header,footer,.hero').className.substring(0, 50) : '';
+                    }
+
+                    window.dataLayer.push(eventData);
                 });
             }
 
-            // Form Submit Tracking
-            if (jdlConfig.track_form_submit) {
+            // ========== FORM SUBMIT (GA4: generate_lead) ==========
+            if (cfg.form) {
                 document.addEventListener('submit', function(e) {
                     var form = e.target;
-                    window.dataLayer.push({
-                        'event': 'form_submit',
-                        'form_id': form.id || '',
-                        'form_name': form.getAttribute('name') || '',
-                        'form_action': form.action || '',
-                        'form_classes': form.className || '',
+                    var formId = form.id || form.getAttribute('name') || '';
+                    var formAction = form.action || '';
+                    var formMethod = form.method || 'post';
+
+                    // Detect form type
+                    var formType = 'form_submit';
+                    var hasEmail = form.querySelector('input[type="email"]');
+                    var hasPhone = form.querySelector('input[type="tel"]');
+                    var isSearch = form.querySelector('input[type="search"]') || form.role === 'search' || formId.match(/search/i);
+                    var isNewsletter = formId.match(/newsletter|subscribe|mailchimp|mc4wp/i) ||
+                                       form.className.match(/newsletter|subscribe/i);
+
+                    var eventData = {
+                        'event': 'generate_lead',
+                        'form_id': formId,
+                        'form_name': form.getAttribute('name') || formId,
+                        'form_classes': form.className.substring(0, 100),
+                        'form_action': formAction,
+                        'form_method': formMethod,
+                        'form_destination': formAction,
+                        'form_has_email': !!hasEmail,
+                        'form_has_phone': !!hasPhone,
+                        'form_type': 'contact',
+                        'currency': cfg.currency,
+                        'value': 0,
+                        'page_location': window.location.href,
                         'page_path': window.location.pathname
-                    });
+                    };
+
+                    if (isSearch) {
+                        var searchInput = form.querySelector('input[type="search"], input[name="s"]');
+                        eventData.event = 'search';
+                        eventData.search_term = searchInput ? searchInput.value : '';
+                        delete eventData.currency;
+                        delete eventData.value;
+                    } else if (isNewsletter) {
+                        eventData.event = 'sign_up';
+                        eventData.method = 'newsletter';
+                        eventData.form_type = 'newsletter';
+                    } else if (hasEmail || hasPhone) {
+                        eventData.form_type = 'lead';
+                    }
+
+                    window.dataLayer.push(eventData);
                 });
             }
 
-            // Video Tracking (YouTube embeds)
-            if (jdlConfig.track_click_events) {
-                var videos = document.querySelectorAll('iframe[src*="youtube"], iframe[src*="vimeo"]');
+            // ========== VIDEO TRACKING (GA4: video_start, video_progress, video_complete) ==========
+            if (cfg.click) {
+                var videos = document.querySelectorAll('video');
                 videos.forEach(function(video) {
-                    window.dataLayer.push({
-                        'event': 'video_present',
-                        'video_url': video.src,
-                        'video_title': video.title || '',
-                        'page_path': window.location.pathname
+                    var videoTitle = video.getAttribute('title') || video.src || 'untitled';
+                    var progressFired = {};
+
+                    video.addEventListener('play', function() {
+                        window.dataLayer.push({
+                            'event': 'video_start',
+                            'video_title': videoTitle,
+                            'video_url': video.currentSrc || video.src,
+                            'video_provider': 'html5',
+                            'video_duration': Math.round(video.duration),
+                            'visible': true
+                        });
+                    }, {once: true});
+
+                    video.addEventListener('timeupdate', function() {
+                        if (!video.duration) return;
+                        var pct = Math.round((video.currentTime / video.duration) * 100);
+                        [25, 50, 75].forEach(function(t) {
+                            if (pct >= t && !progressFired[t]) {
+                                progressFired[t] = true;
+                                window.dataLayer.push({
+                                    'event': 'video_progress',
+                                    'video_title': videoTitle,
+                                    'video_percent': t,
+                                    'video_current_time': Math.round(video.currentTime),
+                                    'video_duration': Math.round(video.duration),
+                                    'video_provider': 'html5',
+                                    'visible': true
+                                });
+                            }
+                        });
+                    });
+
+                    video.addEventListener('ended', function() {
+                        window.dataLayer.push({
+                            'event': 'video_complete',
+                            'video_title': videoTitle,
+                            'video_url': video.currentSrc || video.src,
+                            'video_duration': Math.round(video.duration),
+                            'video_provider': 'html5',
+                            'visible': true
+                        });
                     });
                 });
             }
 
-            // Session & Engagement Tracking
+            // ========== USER ENGAGEMENT (GA4: user_engagement) ==========
             (function() {
                 var startTime = Date.now();
                 var engaged = false;
+                var engagementTime = 0;
 
                 function markEngaged() {
                     if (!engaged) {
                         engaged = true;
+                        engagementTime = Math.round((Date.now() - startTime) / 1000);
                         window.dataLayer.push({
-                            'event': 'user_engaged',
-                            'engagement_time': Math.round((Date.now() - startTime) / 1000)
+                            'event': 'user_engagement',
+                            'engagement_time_msec': engagementTime * 1000,
+                            'page_location': window.location.href,
+                            'page_title': document.title
                         });
                     }
                 }
 
+                // GA4 considers 10s+ or scroll/click as engaged
                 setTimeout(markEngaged, 10000);
                 document.addEventListener('click', markEngaged, {once: true});
+                document.addEventListener('scroll', function() {
+                    if (window.scrollY > 300) markEngaged();
+                }, {once: true});
 
+                // Track time on page on exit
                 window.addEventListener('beforeunload', function() {
                     var timeOnPage = Math.round((Date.now() - startTime) / 1000);
-                    window.dataLayer.push({
-                        'event': 'page_exit',
-                        'time_on_page': timeOnPage,
-                        'page_path': window.location.pathname
-                    });
+                    if (navigator.sendBeacon) {
+                        window.dataLayer.push({
+                            'event': 'page_unload',
+                            'engagement_time_msec': timeOnPage * 1000,
+                            'page_location': window.location.href
+                        });
+                    }
                 });
             })();
+
+            // ========== 404 TRACKING ==========
+            if (cfg.page_type === '404') {
+                window.dataLayer.push({
+                    'event': 'page_not_found',
+                    'page_location': window.location.href,
+                    'page_path': window.location.pathname,
+                    'page_referrer': document.referrer,
+                    'page_title': document.title
+                });
+            }
 
         })();
         </script>
@@ -224,9 +414,11 @@ class JDL_Data_Layer {
 
     private function get_js_config() {
         return [
-            'track_scroll_depth' => $this->settings->is_enabled('track_scroll_depth'),
-            'track_click_events' => $this->settings->is_enabled('track_click_events'),
-            'track_form_submit' => $this->settings->is_enabled('track_form_submit'),
+            'scroll' => $this->settings->is_enabled('track_scroll_depth'),
+            'click' => $this->settings->is_enabled('track_click_events'),
+            'form' => $this->settings->is_enabled('track_form_submit'),
+            'page_type' => $this->get_page_type(),
+            'currency' => function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD',
         ];
     }
 }
