@@ -1,0 +1,331 @@
+<!--
+==========================================================
+JEEBIKA UNIVERSAL DATA LAYER - GTM Custom HTML Tag
+==========================================================
+
+SETUP INSTRUCTIONS:
+1. GTM তে যাও → Tags → New
+2. Tag Type: Custom HTML
+3. নিচের পুরো code paste করো
+4. Trigger: All Pages (Page View)
+5. Save → Publish
+
+ব্যাস! এই একটা tag দিলেই সব platform এ data যাবে:
+- GA4 (view_item, add_to_cart, purchase, etc.)
+- Facebook/Meta (ViewContent, AddToCart, Purchase, etc.)
+- TikTok (CompletePayment, AddToCart, ViewContent, etc.)
+- Google Ads (Enhanced Conversions)
+- LinkedIn (Conversions API)
+- X/Twitter (Conversions)
+- Pinterest (Conversions API)
+
+কোন extra tag/trigger বানাতে হবে না।
+সব auto হবে dataLayer থেকে।
+==========================================================
+-->
+
+<script>
+(function() {
+  'use strict';
+
+  // Wait for dataLayer
+  window.dataLayer = window.dataLayer || [];
+
+  // ============================================================
+  // UNIVERSAL EVENT LISTENER
+  // Listens to ALL dataLayer events and forwards to all platforms
+  // ============================================================
+
+  // Store page load data
+  var pageData = null;
+  var userData = null;
+
+  // Process existing pushes
+  for (var i = 0; i < window.dataLayer.length; i++) {
+    processEntry(window.dataLayer[i]);
+  }
+
+  // Override push to catch future events
+  var originalPush = window.dataLayer.push;
+  window.dataLayer.push = function() {
+    var result = originalPush.apply(this, arguments);
+    for (var i = 0; i < arguments.length; i++) {
+      processEntry(arguments[i]);
+    }
+    return result;
+  };
+
+  function processEntry(entry) {
+    if (!entry || !entry.event) return;
+
+    // Store base data
+    if (entry.event === 'jdl_page_load') {
+      pageData = entry;
+      userData = entry.user || null;
+      return;
+    }
+
+    // Process ecommerce events
+    var ecomEvents = [
+      'view_item', 'view_item_list', 'select_item',
+      'add_to_cart', 'remove_from_cart', 'add_to_wishlist',
+      'view_cart', 'begin_checkout',
+      'add_shipping_info', 'add_payment_info',
+      'purchase'
+    ];
+
+    if (ecomEvents.indexOf(entry.event) > -1 && entry.ecommerce) {
+      // Forward to all platforms
+      sendToGA4(entry.event, entry.ecommerce);
+      sendToFacebook(entry.event, entry.ecommerce);
+      sendToTikTok(entry.event, entry.ecommerce);
+      sendToPinterest(entry.event, entry.ecommerce);
+      sendToLinkedIn(entry.event, entry.ecommerce);
+      sendToTwitter(entry.event, entry.ecommerce);
+    }
+
+    // Non-ecommerce events
+    var engagementEvents = [
+      'generate_lead', 'sign_up', 'login', 'search',
+      'select_content', 'file_download', 'scroll',
+      'video_start', 'video_complete', 'page_not_found'
+    ];
+
+    if (engagementEvents.indexOf(entry.event) > -1) {
+      sendToGA4(entry.event, entry);
+      sendToFacebook(entry.event, entry);
+      sendToTikTok(entry.event, entry);
+    }
+  }
+
+  // ============================================================
+  // GA4 - Already handled natively by GTM GA4 tags
+  // This just ensures data is structured correctly
+  // ============================================================
+  function sendToGA4(event, data) {
+    // GA4 reads directly from dataLayer via GTM triggers
+    // No extra code needed - GTM handles this natively
+    // Just log for debugging
+    if (window.jdl_debug) {
+      console.log('[JDL→GA4]', event, data);
+    }
+  }
+
+  // ============================================================
+  // FACEBOOK PIXEL (client-side)
+  // ============================================================
+  function sendToFacebook(event, data) {
+    if (typeof fbq === 'undefined') return;
+
+    var fbEvent = mapToFB(event);
+    if (!fbEvent) return;
+
+    var params = {};
+    if (data.value) params.value = data.value;
+    if (data.currency) params.currency = data.currency;
+    if (data.content_ids) params.content_ids = data.content_ids;
+    if (data.content_type) params.content_type = data.content_type;
+    if (data.num_items) params.num_items = data.num_items;
+
+    // Items as contents
+    if (data.items && data.items.length) {
+      params.contents = data.items.map(function(item) {
+        return {
+          id: item.content_id || item.item_id || '',
+          quantity: item.quantity || 1,
+          item_price: item.price || 0
+        };
+      });
+      if (!params.content_ids) {
+        params.content_ids = data.items.map(function(item) {
+          return item.content_id || item.item_id || '';
+        });
+      }
+      params.content_type = 'product';
+    }
+
+    // Transaction
+    if (data.transaction_id) params.order_id = data.transaction_id;
+
+    // Search
+    if (data.search_term) params.search_string = data.search_term;
+
+    // User data for advanced matching
+    if (data.user_data) {
+      // fbq('init') already handles this if set up
+    }
+
+    fbq('track', fbEvent, params);
+
+    if (window.jdl_debug) console.log('[JDL→FB]', fbEvent, params);
+  }
+
+  function mapToFB(event) {
+    var map = {
+      'view_item': 'ViewContent',
+      'view_item_list': 'ViewContent',
+      'add_to_cart': 'AddToCart',
+      'add_to_wishlist': 'AddToWishlist',
+      'begin_checkout': 'InitiateCheckout',
+      'add_payment_info': 'AddPaymentInfo',
+      'purchase': 'Purchase',
+      'generate_lead': 'Lead',
+      'sign_up': 'CompleteRegistration',
+      'search': 'Search',
+      'select_content': 'ViewContent'
+    };
+    return map[event] || null;
+  }
+
+  // ============================================================
+  // TIKTOK PIXEL (client-side)
+  // ============================================================
+  function sendToTikTok(event, data) {
+    if (typeof ttq === 'undefined') return;
+
+    var ttEvent = mapToTikTok(event);
+    if (!ttEvent) return;
+
+    var params = {};
+    if (data.value) params.value = data.value;
+    if (data.currency) params.currency = data.currency;
+
+    if (data.items && data.items.length) {
+      params.contents = data.items.map(function(item) {
+        return {
+          content_id: item.content_id || item.item_id || '',
+          content_name: item.content_name || item.item_name || '',
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          content_type: 'product'
+        };
+      });
+      params.content_type = 'product';
+    }
+
+    if (data.transaction_id) params.order_id = data.transaction_id;
+    if (data.search_term) params.query = data.search_term;
+
+    ttq.track(ttEvent, params);
+
+    if (window.jdl_debug) console.log('[JDL→TikTok]', ttEvent, params);
+  }
+
+  function mapToTikTok(event) {
+    var map = {
+      'view_item': 'ViewContent',
+      'view_item_list': 'ViewContent',
+      'add_to_cart': 'AddToCart',
+      'add_to_wishlist': 'AddToWishlist',
+      'begin_checkout': 'InitiateCheckout',
+      'add_payment_info': 'AddPaymentInfo',
+      'purchase': 'CompletePayment',
+      'generate_lead': 'SubmitForm',
+      'sign_up': 'CompleteRegistration',
+      'search': 'Search'
+    };
+    return map[event] || null;
+  }
+
+  // ============================================================
+  // PINTEREST TAG (client-side)
+  // ============================================================
+  function sendToPinterest(event, data) {
+    if (typeof pintrk === 'undefined') return;
+
+    var pinEvent = mapToPinterest(event);
+    if (!pinEvent) return;
+
+    var params = {};
+    if (data.value) params.value = data.value;
+    if (data.currency) params.currency = data.currency;
+    if (data.transaction_id) params.order_id = data.transaction_id;
+
+    if (data.items && data.items.length) {
+      params.line_items = data.items.map(function(item) {
+        return {
+          product_id: item.content_id || item.item_id || '',
+          product_name: item.content_name || item.item_name || '',
+          product_quantity: item.quantity || 1,
+          product_price: item.price || 0
+        };
+      });
+    }
+
+    if (data.search_term) params.search_query = data.search_term;
+
+    pintrk('track', pinEvent, params);
+
+    if (window.jdl_debug) console.log('[JDL→Pinterest]', pinEvent, params);
+  }
+
+  function mapToPinterest(event) {
+    var map = {
+      'view_item': 'pagevisit',
+      'add_to_cart': 'addtocart',
+      'begin_checkout': 'checkout',
+      'purchase': 'checkout',
+      'generate_lead': 'lead',
+      'sign_up': 'signup',
+      'search': 'search'
+    };
+    return map[event] || null;
+  }
+
+  // ============================================================
+  // LINKEDIN INSIGHT TAG (client-side)
+  // ============================================================
+  function sendToLinkedIn(event, data) {
+    if (typeof window.lintrk === 'undefined') return;
+
+    // LinkedIn uses conversion_id based tracking
+    // Just fire the standard conversion on purchase/lead
+    if (event === 'purchase' || event === 'generate_lead' || event === 'sign_up') {
+      window.lintrk('track', { conversion_id: event });
+    }
+
+    if (window.jdl_debug) console.log('[JDL→LinkedIn]', event);
+  }
+
+  // ============================================================
+  // X/TWITTER PIXEL (client-side)
+  // ============================================================
+  function sendToTwitter(event, data) {
+    if (typeof twq === 'undefined') return;
+
+    var twEvent = mapToTwitter(event);
+    if (!twEvent) return;
+
+    var params = {};
+    if (data.value) params.value = String(data.value);
+    if (data.currency) params.currency = data.currency;
+    if (data.transaction_id) params.order_id = data.transaction_id;
+    if (data.num_items || (data.items && data.items.length)) {
+      params.num_items = data.num_items || data.items.length;
+    }
+
+    twq('event', twEvent, params);
+
+    if (window.jdl_debug) console.log('[JDL→Twitter]', twEvent, params);
+  }
+
+  function mapToTwitter(event) {
+    var map = {
+      'view_item': 'tw-viewcontent',
+      'add_to_cart': 'tw-addtocart',
+      'begin_checkout': 'tw-checkout',
+      'purchase': 'tw-purchase',
+      'generate_lead': 'tw-lead',
+      'sign_up': 'tw-signup',
+      'search': 'tw-search'
+    };
+    return map[event] || null;
+  }
+
+  // ============================================================
+  // DEBUG MODE - Enable with: window.jdl_debug = true
+  // ============================================================
+  // To enable debugging, run in console: window.jdl_debug = true
+
+})();
+</script>

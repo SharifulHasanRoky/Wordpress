@@ -1,0 +1,475 @@
+<script>
+/**
+ * ============================================================
+ * JEEBIKA UNIVERSAL DATA LAYER TAG v1.0
+ * ============================================================
+ * 
+ * GTM তে Custom HTML → All Pages trigger → ব্যাস!
+ * 
+ * এই code dataLayer এর সব event শুনবে এবং auto forward করবে:
+ * → GA4 (native)
+ * → Facebook/Meta Pixel
+ * → TikTok Pixel
+ * → Google Ads (Enhanced Conversions)
+ * → LinkedIn Insight Tag
+ * → X/Twitter Pixel
+ * → Pinterest Tag
+ * 
+ * SETUP:
+ * 1. GTM → Tags → New → Custom HTML
+ * 2. এই পুরো code paste করো
+ * 3. Trigger: All Pages (Page View)
+ * 4. Save → Publish
+ * ============================================================
+ */
+(function() {
+  'use strict';
+
+  var DL = window.dataLayer = window.dataLayer || [];
+
+  // ============================================================
+  // CONFIG - তোমার pixel IDs এখানে বসাও
+  // ============================================================
+  var CONFIG = {
+    // Facebook
+    fb_pixel_id: '',          // তোমার FB Pixel ID (e.g., '123456789012345')
+    
+    // TikTok
+    tt_pixel_id: '',          // তোমার TikTok Pixel ID (e.g., 'CXXXXXXXXXXXXXXXXX')
+    
+    // Pinterest
+    pin_tag_id: '',           // তোমার Pinterest Tag ID (e.g., '1234567890123')
+    
+    // X/Twitter
+    tw_pixel_id: '',          // তোমার Twitter Pixel ID (e.g., 'abcde')
+    
+    // LinkedIn
+    li_partner_id: '',        // তোমার LinkedIn Partner ID (e.g., '1234567')
+    
+    // Google Ads
+    gads_id: '',              // তোমার Google Ads ID (e.g., 'AW-123456789')
+    gads_purchase_label: '',  // Purchase conversion label (e.g., 'AbCdEfGhIjK')
+    gads_lead_label: '',      // Lead conversion label
+
+    // Debug mode (console.log দেখতে চাইলে true করো)
+    debug: false
+  };
+
+  // ============================================================
+  // PIXEL INITIALIZATION
+  // (শুধু ID দেওয়া থাকলেই initialize হবে)
+  // ============================================================
+
+  // Facebook Pixel
+  if (CONFIG.fb_pixel_id && typeof fbq === 'undefined') {
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', CONFIG.fb_pixel_id);
+    fbq('track', 'PageView');
+  }
+
+  // TikTok Pixel
+  if (CONFIG.tt_pixel_id && typeof ttq === 'undefined') {
+    !function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=
+    ["page","track","identify","instances","debug","on","off","once","ready","alias",
+    "group","enableCookie","disableCookie"];ttq.setAndDefer=function(t,e){t[e]=function()
+    {t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<
+    ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t)
+    {for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);
+    return e};ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";
+    ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;
+    ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=document.createElement("script");o.type=
+    "text/javascript";o.async=!0;o.src=i+"?sdkid="+e+"&lib="+t;var a=
+    document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
+    ttq.load(CONFIG.tt_pixel_id);ttq.page()}(window,document,'ttq');
+  }
+
+  // Pinterest Tag
+  if (CONFIG.pin_tag_id && typeof pintrk === 'undefined') {
+    !function(e){if(!window.pintrk){window.pintrk=function(){window.pintrk.queue.push(
+    Array.prototype.slice.call(arguments))};var n=window.pintrk;n.queue=[],n.version="3.0";
+    var t=document.createElement("script");t.async=!0,t.src=e;var r=
+    document.getElementsByTagName("script")[0];r.parentNode.insertBefore(t,r)}}
+    ("https://s.pinimg.com/ct/core.js");
+    pintrk('load', CONFIG.pin_tag_id);
+    pintrk('page');
+  }
+
+  // X/Twitter Pixel
+  if (CONFIG.tw_pixel_id && typeof twq === 'undefined') {
+    !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):
+    s.queue.push(arguments);},s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,
+    u.src='https://static.ads-twitter.com/uwt.js',a=t.getElementsByTagName(n)[0],
+    a.parentNode.insertBefore(u,a))}(window,document,'script');
+    twq('config', CONFIG.tw_pixel_id);
+  }
+
+  // LinkedIn Insight Tag
+  if (CONFIG.li_partner_id && typeof window.lintrk === 'undefined') {
+    var _linkedin_partner_id = CONFIG.li_partner_id;
+    window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+    window._linkedin_data_partner_ids.push(_linkedin_partner_id);
+    !function(l){if(!l){window.lintrk=function(a,b){window.lintrk.q.push([a,b])};
+    window.lintrk.q=[]}var s=document.getElementsByTagName("script")[0];
+    var b=document.createElement("script");b.type="text/javascript";b.async=true;
+    b.src="https://snap.licdn.com/li.lms-analytics/insight.min.js";
+    s.parentNode.insertBefore(b,s);}(window.lintrk)}
+  }
+
+  // ============================================================
+  // EVENT MAPPING
+  // ============================================================
+  var FB_MAP = {
+    'view_item': 'ViewContent',
+    'view_item_list': 'ViewContent',
+    'add_to_cart': 'AddToCart',
+    'add_to_wishlist': 'AddToWishlist',
+    'begin_checkout': 'InitiateCheckout',
+    'add_payment_info': 'AddPaymentInfo',
+    'purchase': 'Purchase',
+    'generate_lead': 'Lead',
+    'sign_up': 'CompleteRegistration',
+    'search': 'Search',
+    'select_content': 'ViewContent'
+  };
+
+  var TT_MAP = {
+    'view_item': 'ViewContent',
+    'view_item_list': 'ViewContent',
+    'add_to_cart': 'AddToCart',
+    'add_to_wishlist': 'AddToWishlist',
+    'begin_checkout': 'InitiateCheckout',
+    'add_payment_info': 'AddPaymentInfo',
+    'purchase': 'CompletePayment',
+    'generate_lead': 'SubmitForm',
+    'sign_up': 'CompleteRegistration',
+    'search': 'Search'
+  };
+
+  var PIN_MAP = {
+    'view_item': 'pagevisit',
+    'add_to_cart': 'addtocart',
+    'begin_checkout': 'checkout',
+    'purchase': 'checkout',
+    'generate_lead': 'lead',
+    'sign_up': 'signup',
+    'search': 'search'
+  };
+
+  var TW_MAP = {
+    'view_item': 'tw-viewcontent',
+    'add_to_cart': 'tw-addtocart',
+    'begin_checkout': 'tw-checkout',
+    'purchase': 'tw-purchase',
+    'generate_lead': 'tw-lead',
+    'sign_up': 'tw-signup',
+    'search': 'tw-search'
+  };
+
+  // ============================================================
+  // PLATFORM SENDERS
+  // ============================================================
+
+  function sendFB(event, ecom) {
+    if (!CONFIG.fb_pixel_id || typeof fbq === 'undefined') return;
+    var fbEvt = FB_MAP[event];
+    if (!fbEvt) return;
+
+    var p = {};
+    if (ecom.value) p.value = ecom.value;
+    if (ecom.currency) p.currency = ecom.currency;
+    if (ecom.transaction_id) p.order_id = ecom.transaction_id;
+    if (ecom.search_term) p.search_string = ecom.search_term;
+
+    if (ecom.items && ecom.items.length) {
+      p.content_ids = ecom.items.map(function(i) { return i.content_id || i.item_id || ''; });
+      p.contents = ecom.items.map(function(i) {
+        return { id: i.content_id || i.item_id || '', quantity: i.quantity || 1, item_price: i.price || 0 };
+      });
+      p.content_type = 'product';
+      p.num_items = ecom.items.length;
+    }
+    if (ecom.content_ids) p.content_ids = ecom.content_ids;
+
+    fbq('track', fbEvt, p);
+    log('FB', fbEvt, p);
+  }
+
+  function sendTT(event, ecom) {
+    if (!CONFIG.tt_pixel_id || typeof ttq === 'undefined') return;
+    var ttEvt = TT_MAP[event];
+    if (!ttEvt) return;
+
+    var p = {};
+    if (ecom.value) p.value = ecom.value;
+    if (ecom.currency) p.currency = ecom.currency;
+    if (ecom.transaction_id) p.order_id = ecom.transaction_id;
+    if (ecom.search_term) p.query = ecom.search_term;
+
+    if (ecom.items && ecom.items.length) {
+      p.contents = ecom.items.map(function(i) {
+        return {
+          content_id: i.content_id || i.item_id || '',
+          content_name: i.content_name || i.item_name || '',
+          quantity: i.quantity || 1,
+          price: i.price || 0,
+          content_type: 'product'
+        };
+      });
+      p.content_type = 'product';
+    }
+
+    ttq.track(ttEvt, p);
+    log('TikTok', ttEvt, p);
+  }
+
+  function sendPIN(event, ecom) {
+    if (!CONFIG.pin_tag_id || typeof pintrk === 'undefined') return;
+    var pinEvt = PIN_MAP[event];
+    if (!pinEvt) return;
+
+    var p = {};
+    if (ecom.value) p.value = ecom.value;
+    if (ecom.currency) p.currency = ecom.currency;
+    if (ecom.transaction_id) p.order_id = ecom.transaction_id;
+    if (ecom.search_term) p.search_query = ecom.search_term;
+
+    if (ecom.items && ecom.items.length) {
+      p.line_items = ecom.items.map(function(i) {
+        return {
+          product_id: i.content_id || i.item_id || '',
+          product_name: i.content_name || i.item_name || '',
+          product_quantity: i.quantity || 1,
+          product_price: i.price || 0
+        };
+      });
+    }
+
+    pintrk('track', pinEvt, p);
+    log('Pinterest', pinEvt, p);
+  }
+
+  function sendTW(event, ecom) {
+    if (!CONFIG.tw_pixel_id || typeof twq === 'undefined') return;
+    var twEvt = TW_MAP[event];
+    if (!twEvt) return;
+
+    var p = {};
+    if (ecom.value) p.value = String(ecom.value);
+    if (ecom.currency) p.currency = ecom.currency;
+    if (ecom.transaction_id) p.order_id = ecom.transaction_id;
+    if (ecom.items) p.num_items = String(ecom.items.length);
+
+    twq('event', twEvt, p);
+    log('Twitter/X', twEvt, p);
+  }
+
+  function sendLI(event, ecom) {
+    if (!CONFIG.li_partner_id || typeof window.lintrk === 'undefined') return;
+    if (event === 'purchase' || event === 'generate_lead' || event === 'sign_up') {
+      window.lintrk('track', { conversion_id: event });
+      log('LinkedIn', event);
+    }
+  }
+
+  function sendGADS(event, ecom) {
+    if (!CONFIG.gads_id) return;
+    if (typeof gtag === 'undefined') return;
+
+    if (event === 'purchase' && CONFIG.gads_purchase_label) {
+      gtag('event', 'conversion', {
+        'send_to': CONFIG.gads_id + '/' + CONFIG.gads_purchase_label,
+        'value': ecom.value || 0,
+        'currency': ecom.currency || 'USD',
+        'transaction_id': ecom.transaction_id || ''
+      });
+      log('Google Ads', 'purchase conversion', ecom.value);
+    }
+
+    if (event === 'generate_lead' && CONFIG.gads_lead_label) {
+      gtag('event', 'conversion', {
+        'send_to': CONFIG.gads_id + '/' + CONFIG.gads_lead_label,
+        'value': ecom.value || 0,
+        'currency': ecom.currency || 'USD'
+      });
+      log('Google Ads', 'lead conversion');
+    }
+  }
+
+  // ============================================================
+  // MAIN LISTENER - সব dataLayer event শোনে
+  // ============================================================
+  var ECOM_EVENTS = [
+    'view_item', 'view_item_list', 'select_item',
+    'add_to_cart', 'remove_from_cart', 'add_to_wishlist',
+    'view_cart', 'begin_checkout',
+    'add_shipping_info', 'add_payment_info',
+    'purchase'
+  ];
+
+  var ENGAGEMENT_EVENTS = [
+    'generate_lead', 'sign_up', 'login', 'search',
+    'select_content', 'file_download'
+  ];
+
+  function processEntry(entry) {
+    if (!entry || !entry.event) return;
+    if (entry.event === 'gtm.js' || entry.event === 'gtm.dom' || entry.event === 'gtm.load') return;
+
+    var event = entry.event;
+    var ecom = entry.ecommerce || entry || {};
+
+    // Ecommerce events
+    if (ECOM_EVENTS.indexOf(event) > -1 && entry.ecommerce) {
+      ecom = entry.ecommerce;
+      sendFB(event, ecom);
+      sendTT(event, ecom);
+      sendPIN(event, ecom);
+      sendTW(event, ecom);
+      sendLI(event, ecom);
+      sendGADS(event, ecom);
+    }
+
+    // Engagement events
+    if (ENGAGEMENT_EVENTS.indexOf(event) > -1) {
+      sendFB(event, ecom);
+      sendTT(event, ecom);
+      sendPIN(event, ecom);
+      sendTW(event, ecom);
+      sendLI(event, ecom);
+      sendGADS(event, ecom);
+    }
+  }
+
+  // Process all existing dataLayer entries
+  for (var i = 0; i < DL.length; i++) {
+    processEntry(DL[i]);
+  }
+
+  // Override push to catch future events in real-time
+  var origPush = DL.push;
+  DL.push = function() {
+    var result = origPush.apply(this, arguments);
+    for (var j = 0; j < arguments.length; j++) {
+      processEntry(arguments[j]);
+    }
+    return result;
+  };
+
+  // ============================================================
+  // ENHANCED CONVERSIONS - User Data (Google Ads)
+  // ============================================================
+  // Auto-detect user data from dataLayer for Enhanced Conversions
+  function checkUserData() {
+    for (var i = 0; i < DL.length; i++) {
+      var entry = DL[i];
+      if (entry && entry.user && entry.user.email_sha256 && CONFIG.gads_id && typeof gtag !== 'undefined') {
+        gtag('set', 'user_data', {
+          'sha256_email_address': entry.user.email_sha256,
+          'sha256_phone_number': entry.user.phone_sha256 || '',
+          'address': {
+            'sha256_first_name': entry.user.first_name_sha256 || '',
+            'sha256_last_name': entry.user.last_name_sha256 || '',
+            'city': entry.user.city || '',
+            'region': entry.user.state || '',
+            'country': entry.user.country || '',
+            'postal_code': entry.user.zip || ''
+          }
+        });
+        log('Google Ads', 'Enhanced Conversions user_data set');
+        break;
+      }
+      // Also check user_data inside ecommerce.user_data (purchase event)
+      if (entry && entry.ecommerce && entry.ecommerce.user_data) {
+        var ud = entry.ecommerce.user_data;
+        if (ud.email_sha256 && CONFIG.gads_id && typeof gtag !== 'undefined') {
+          gtag('set', 'user_data', {
+            'sha256_email_address': ud.email_sha256,
+            'sha256_phone_number': ud.phone_sha256 || '',
+            'address': {
+              'sha256_first_name': ud.first_name_sha256 || '',
+              'sha256_last_name': ud.last_name_sha256 || '',
+              'city': ud.city || '',
+              'region': ud.state || '',
+              'country': ud.country || '',
+              'postal_code': ud.zip || ''
+            }
+          });
+          log('Google Ads', 'Enhanced Conversions user_data (from purchase)');
+          break;
+        }
+      }
+    }
+  }
+  setTimeout(checkUserData, 1000);
+
+  // ============================================================
+  // FACEBOOK ADVANCED MATCHING (from user data in dataLayer)
+  // ============================================================
+  function checkFBAdvancedMatching() {
+    if (!CONFIG.fb_pixel_id || typeof fbq === 'undefined') return;
+    for (var i = 0; i < DL.length; i++) {
+      var entry = DL[i];
+      if (entry && entry.user && entry.user.email) {
+        fbq('init', CONFIG.fb_pixel_id, {
+          em: entry.user.email,
+          fn: entry.user.first_name || '',
+          ln: entry.user.last_name || '',
+          ph: entry.user.phone || '',
+          ct: entry.user.city || '',
+          st: entry.user.state || '',
+          zp: entry.user.zip || '',
+          country: entry.user.country || ''
+        });
+        log('FB', 'Advanced Matching set');
+        break;
+      }
+    }
+  }
+  setTimeout(checkFBAdvancedMatching, 500);
+
+  // ============================================================
+  // TikTok Identity (from user data)
+  // ============================================================
+  function checkTTIdentity() {
+    if (!CONFIG.tt_pixel_id || typeof ttq === 'undefined') return;
+    for (var i = 0; i < DL.length; i++) {
+      var entry = DL[i];
+      if (entry && entry.user && entry.user.email_sha256) {
+        ttq.identify({
+          sha256_email: entry.user.email_sha256,
+          sha256_phone_number: entry.user.phone_sha256 || '',
+          external_id: entry.user.id || ''
+        });
+        log('TikTok', 'Identity set');
+        break;
+      }
+    }
+  }
+  setTimeout(checkTTIdentity, 500);
+
+  // ============================================================
+  // DEBUG LOGGER
+  // ============================================================
+  function log() {
+    if (CONFIG.debug) {
+      var args = ['[Jeebika DL]'].concat(Array.prototype.slice.call(arguments));
+      console.log.apply(console, args);
+    }
+  }
+
+  log('Initialized. Listening to dataLayer events...');
+  log('Platforms active:', {
+    FB: !!CONFIG.fb_pixel_id,
+    TikTok: !!CONFIG.tt_pixel_id,
+    Pinterest: !!CONFIG.pin_tag_id,
+    Twitter: !!CONFIG.tw_pixel_id,
+    LinkedIn: !!CONFIG.li_partner_id,
+    GoogleAds: !!CONFIG.gads_id
+  });
+
+})();
+</script>
