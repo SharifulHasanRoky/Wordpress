@@ -2,48 +2,35 @@
 if (!defined('ABSPATH')) exit;
 
 class JDL_Settings {
-
     private static $instance = null;
-    private $options = [];
+    private $opts = [];
 
-    public static function get_instance() {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
+    public static function init() {
+        if (!self::$instance) self::$instance = new self();
         return self::$instance;
     }
 
     private function __construct() {
-        $this->options = get_option('jdl_settings', []);
+        $this->opts = get_option('jdl_options', Jeebika_Data_Layer::defaults());
     }
 
     public function get($key, $default = '') {
-        return isset($this->options[$key]) ? $this->options[$key] : $default;
+        return $this->opts[$key] ?? $default;
     }
 
-    public function get_all() {
-        return $this->options;
+    public function on($key) {
+        return !empty($this->opts[$key]);
     }
 
-    public function is_enabled($key) {
-        return !empty($this->options[$key]);
+    public function all() {
+        return $this->opts;
     }
 
-    public function update($key, $value) {
-        $this->options[$key] = $value;
-        update_option('jdl_settings', $this->options);
+    public function save($data) {
+        $this->opts = $data;
+        update_option('jdl_options', $data);
     }
 
-    public function save_all($options) {
-        $this->options = $options;
-        update_option('jdl_settings', $this->options);
-    }
-
-    public function get_gtm_id() {
-        return $this->get('gtm_container_id', '');
-    }
-
-    public function get_server_url() {
-        return $this->get('gtm_server_container_url', '');
-    }
+    public function gtm_id() { return $this->get('gtm_id'); }
+    public function server_url() { return $this->get('gtm_server_url'); }
 }

@@ -2,64 +2,41 @@
 if (!defined('ABSPATH')) exit;
 
 class JDL_GTM {
-
     private static $instance = null;
-    private $settings;
 
-    public static function get_instance() {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
+    public static function init() {
+        if (!self::$instance) self::$instance = new self();
         return self::$instance;
     }
 
     private function __construct() {
-        $this->settings = JDL_Settings::get_instance();
-        add_action('wp_head', [$this, 'inject_gtm_head'], 1);
-        add_action('wp_body_open', [$this, 'inject_gtm_body'], 1);
-        add_action('wp_head', [$this, 'inject_datalayer_init'], 0);
+        $s = JDL_Settings::init();
+        if (!$s->gtm_id()) return;
+        if ($s->on('gtm_head')) add_action('wp_head', [$this, 'head'], 1);
+        if ($s->on('gtm_body')) add_action('wp_body_open', [$this, 'body'], 1);
+        add_action('wp_head', [$this, 'dl_init'], 0);
     }
 
-    public function inject_datalayer_init() {
-        $gtm_id = $this->settings->get_gtm_id();
-        if (empty($gtm_id)) return;
+    public function dl_init() {
+        echo '<script>window.dataLayer=window.dataLayer||[];</script>' . "\n";
+    }
+
+    public function head() {
+        $id = JDL_Settings::init()->gtm_id();
+        $url = JDL_Settings::init()->server_url();
+        $src = $url ? rtrim($url, '/') . '/gtm.js' : 'https://www.googletagmanager.com/gtm.js';
         ?>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-        </script>
+<!-- Jeebika GTM -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='<?php echo esc_url($src); ?>?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','<?php echo esc_attr($id); ?>');</script>
         <?php
     }
 
-    public function inject_gtm_head() {
-        $gtm_id = $this->settings->get_gtm_id();
-        if (empty($gtm_id) || !$this->settings->is_enabled('enable_gtm_head')) return;
-
-        $server_url = $this->settings->get_server_url();
-        $gtm_url = !empty($server_url) ? rtrim($server_url, '/') . '/gtm.js' : 'https://www.googletagmanager.com/gtm.js';
+    public function body() {
+        $id = JDL_Settings::init()->gtm_id();
+        $url = JDL_Settings::init()->server_url();
+        $src = $url ? rtrim($url, '/') . '/ns.html' : 'https://www.googletagmanager.com/ns.html';
         ?>
-        <!-- Jeebika Data Layer - GTM Head -->
-        <script>
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            '<?php echo esc_url($gtm_url); ?>?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','<?php echo esc_attr($gtm_id); ?>');
-        </script>
-        <!-- End Jeebika Data Layer - GTM Head -->
-        <?php
-    }
-
-    public function inject_gtm_body() {
-        $gtm_id = $this->settings->get_gtm_id();
-        if (empty($gtm_id) || !$this->settings->is_enabled('enable_gtm_body')) return;
-
-        $server_url = $this->settings->get_server_url();
-        $ns_url = !empty($server_url) ? rtrim($server_url, '/') . '/ns.html' : 'https://www.googletagmanager.com/ns.html';
-        ?>
-        <!-- Jeebika Data Layer - GTM Body -->
-        <noscript><iframe src="<?php echo esc_url($ns_url); ?>?id=<?php echo esc_attr($gtm_id); ?>"
-        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-        <!-- End Jeebika Data Layer - GTM Body -->
+<noscript><iframe src="<?php echo esc_url($src); ?>?id=<?php echo esc_attr($id); ?>" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <?php
     }
 }

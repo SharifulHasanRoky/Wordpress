@@ -1,37 +1,26 @@
 <?php
 /**
  * Plugin Name: Jeebika Data Layer & Server-Side Tracking
- * Plugin URI: https://jeebika.com/data-layer
- * Description: Full dynamic data layer and server-side tracking for WordPress & WooCommerce. Supports eCommerce, user data, and multi-industry tracking via Google Tag Manager. One-click enable/disable for all events.
- * Version: 1.0.0
+ * Description: Ultimate data layer + server-side tracking for all ad platforms. GA4 schema. Just add GTM ID and tick what you need.
+ * Version: 2.0.0
  * Author: Jeebika
  * Author URI: https://jeebika.com
- * Text Domain: jeebika-data-layer
- * Domain Path: /languages
  * Requires at least: 5.0
  * Requires PHP: 7.4
- * WC requires at least: 5.0
- * WC tested up to: 8.0
+ * WC tested up to: 9.0
  */
 
-if (!defined('ABSPATH')) {
-    exit;
-}
+if (!defined('ABSPATH')) exit;
 
-// Plugin Constants
-define('JDL_VERSION', '1.0.0');
-define('JDL_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('JDL_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('JDL_PLUGIN_BASENAME', plugin_basename(__FILE__));
+define('JDL_VERSION', '2.0.0');
+define('JDL_DIR', plugin_dir_path(__FILE__));
+define('JDL_URL', plugin_dir_url(__FILE__));
 
-/**
- * Main Plugin Class
- */
 final class Jeebika_Data_Layer {
 
     private static $instance = null;
 
-    public static function get_instance() {
+    public static function init() {
         if (null === self::$instance) {
             self::$instance = new self();
         }
@@ -39,124 +28,137 @@ final class Jeebika_Data_Layer {
     }
 
     private function __construct() {
-        $this->load_dependencies();
-        $this->init_hooks();
-    }
-
-    private function load_dependencies() {
-        require_once JDL_PLUGIN_DIR . 'includes/class-jdl-settings.php';
-        require_once JDL_PLUGIN_DIR . 'includes/class-jdl-gtm.php';
-        require_once JDL_PLUGIN_DIR . 'includes/class-jdl-data-layer.php';
-        require_once JDL_PLUGIN_DIR . 'includes/class-jdl-user-tracking.php';
-        require_once JDL_PLUGIN_DIR . 'includes/class-jdl-server-side.php';
-        require_once JDL_PLUGIN_DIR . 'includes/class-jdl-industry.php';
-
-        if (class_exists('WooCommerce')) {
-            require_once JDL_PLUGIN_DIR . 'includes/class-jdl-woocommerce.php';
-        }
-
-        if (is_admin()) {
-            require_once JDL_PLUGIN_DIR . 'admin/class-jdl-admin.php';
-        }
-    }
-
-    private function init_hooks() {
-        add_action('plugins_loaded', [$this, 'on_plugins_loaded']);
+        $this->includes();
+        add_action('plugins_loaded', [$this, 'boot']);
         register_activation_hook(__FILE__, [$this, 'activate']);
-        register_deactivation_hook(__FILE__, [$this, 'deactivate']);
     }
 
-    public function on_plugins_loaded() {
-        // Initialize modules
-        JDL_Settings::get_instance();
-        JDL_GTM::get_instance();
-        JDL_Data_Layer::get_instance();
-        JDL_User_Tracking::get_instance();
-        JDL_Server_Side::get_instance();
-        JDL_Industry::get_instance();
-
-        if (class_exists('WooCommerce')) {
-            JDL_WooCommerce::get_instance();
-        }
-
+    private function includes() {
+        require_once JDL_DIR . 'includes/class-jdl-settings.php';
+        require_once JDL_DIR . 'includes/class-jdl-gtm.php';
+        require_once JDL_DIR . 'includes/class-jdl-datalayer.php';
+        require_once JDL_DIR . 'includes/class-jdl-ecommerce.php';
+        require_once JDL_DIR . 'includes/class-jdl-engagement.php';
+        require_once JDL_DIR . 'includes/class-jdl-serverside.php';
+        require_once JDL_DIR . 'includes/class-jdl-niche.php';
         if (is_admin()) {
-            JDL_Admin::get_instance();
+            require_once JDL_DIR . 'admin/class-jdl-admin.php';
+        }
+    }
+
+    public function boot() {
+        JDL_Settings::init();
+        JDL_GTM::init();
+        JDL_DataLayer::init();
+        JDL_Engagement::init();
+        JDL_ServerSide::init();
+        JDL_Niche::init();
+        if (class_exists('WooCommerce')) {
+            JDL_Ecommerce::init();
+        }
+        if (is_admin()) {
+            JDL_Admin::init();
         }
     }
 
     public function activate() {
-        $default_options = [
-            'gtm_container_id' => '',
-            'gtm_server_container_url' => '',
-            'enable_gtm_head' => 1,
-            'enable_gtm_body' => 1,
-            // eCommerce Events
-            'track_view_item' => 1,
-            'track_view_item_list' => 1,
-            'track_select_item' => 1,
-            'track_add_to_cart' => 1,
-            'track_remove_from_cart' => 1,
-            'track_view_cart' => 1,
-            'track_begin_checkout' => 1,
-            'track_add_shipping_info' => 1,
-            'track_add_payment_info' => 1,
-            'track_purchase' => 1,
-            'track_refund' => 1,
-            // User Events
-            'track_user_login' => 1,
-            'track_user_register' => 1,
-            'track_user_data' => 1,
-            // Page Events
-            'track_page_view' => 1,
-            'track_scroll_depth' => 1,
-            'track_click_events' => 1,
-            'track_form_submit' => 1,
-            'track_search' => 1,
-            'track_404' => 1,
-            // Industry
-            'industry_type' => 'ecommerce',
-            'track_lead_generation' => 0,
-            'track_saas_events' => 0,
-            'track_education_events' => 0,
-            'track_real_estate_events' => 0,
-            'track_healthcare_events' => 0,
-            'track_travel_events' => 0,
-            'track_finance_events' => 0,
-            'track_media_events' => 0,
-            // Server-Side
-            'enable_server_side' => 0,
-            'ss_ga4_measurement_id' => '',
-            'ss_ga4_api_secret' => '',
-            'ss_fb_pixel_id' => '',
-            'ss_fb_access_token' => '',
-            'ss_tiktok_pixel_id' => '',
-            'ss_tiktok_access_token' => '',
-            'ss_gads_customer_id' => '',
-            'ss_gads_conversion_action' => '',
-            'ss_gads_developer_token' => '',
-            'ss_gads_oauth_token' => '',
-            'ss_linkedin_partner_id' => '',
-            'ss_linkedin_conversion_id' => '',
-            'ss_linkedin_access_token' => '',
-            'ss_x_pixel_id' => '',
-            'ss_x_conversion_id' => '',
-            'ss_x_access_token' => '',
-            'ss_pinterest_ad_account_id' => '',
-            'ss_pinterest_access_token' => '',
-            'ss_endpoint_secret' => wp_generate_password(32, false),
-        ];
-
-        if (!get_option('jdl_settings')) {
-            add_option('jdl_settings', $default_options);
-        }
-
-        flush_rewrite_rules();
+        if (get_option('jdl_options')) return;
+        add_option('jdl_options', self::defaults());
     }
 
-    public function deactivate() {
-        flush_rewrite_rules();
+    public static function defaults() {
+        return [
+            // GTM
+            'gtm_id' => '',
+            'gtm_server_url' => '',
+            'gtm_head' => 1,
+            'gtm_body' => 1,
+
+            // Platforms - Server Side
+            'ss_enabled' => 0,
+            // GA4
+            'ss_ga4_id' => '',
+            'ss_ga4_secret' => '',
+            // Facebook/Meta
+            'ss_fb_pixel' => '',
+            'ss_fb_token' => '',
+            // TikTok
+            'ss_tt_pixel' => '',
+            'ss_tt_token' => '',
+            // Google Ads
+            'ss_gads_id' => '',
+            'ss_gads_action' => '',
+            'ss_gads_token' => '',
+            'ss_gads_oauth' => '',
+            // Microsoft/Bing Ads
+            'ss_bing_tag_id' => '',
+            'ss_bing_action' => '',
+            // LinkedIn
+            'ss_li_id' => '',
+            'ss_li_conversion' => '',
+            'ss_li_token' => '',
+            // X/Twitter
+            'ss_x_pixel' => '',
+            'ss_x_event' => '',
+            'ss_x_token' => '',
+            // Pinterest
+            'ss_pin_account' => '',
+            'ss_pin_token' => '',
+            // Snapchat
+            'ss_snap_pixel' => '',
+            'ss_snap_token' => '',
+
+            // Events (all ON by default)
+            'ev_page_view' => 1,
+            'ev_view_item' => 1,
+            'ev_view_item_list' => 1,
+            'ev_select_item' => 1,
+            'ev_add_to_cart' => 1,
+            'ev_remove_from_cart' => 1,
+            'ev_view_cart' => 1,
+            'ev_begin_checkout' => 1,
+            'ev_add_shipping_info' => 1,
+            'ev_add_payment_info' => 1,
+            'ev_purchase' => 1,
+            'ev_refund' => 1,
+            'ev_add_to_wishlist' => 1,
+            'ev_login' => 1,
+            'ev_sign_up' => 1,
+            'ev_search' => 1,
+            'ev_generate_lead' => 1,
+            'ev_scroll' => 1,
+            'ev_click' => 1,
+            'ev_file_download' => 1,
+            'ev_form_submit' => 1,
+            'ev_video' => 1,
+            'ev_phone_click' => 1,
+            'ev_email_click' => 1,
+            'ev_outbound_click' => 1,
+            'ev_404' => 1,
+
+            // User Data
+            'ud_enabled' => 1,
+            'ud_hash_email' => 1,
+            'ud_hash_phone' => 1,
+            'ud_hash_name' => 1,
+            'ud_hash_address' => 1,
+            'ud_customer_data' => 1,
+
+            // Niches (all OFF by default, toggle on)
+            'niche_ecommerce' => 1,
+            'niche_lead_gen' => 0,
+            'niche_saas' => 0,
+            'niche_education' => 0,
+            'niche_real_estate' => 0,
+            'niche_healthcare' => 0,
+            'niche_travel' => 0,
+            'niche_finance' => 0,
+            'niche_media' => 0,
+            'niche_restaurant' => 0,
+            'niche_automotive' => 0,
+            'niche_jobs' => 0,
+        ];
     }
 }
 
-// Initialize the plugin
-Jeebika_Data_Layer::get_instance();
+Jeebika_Data_Layer::init();
